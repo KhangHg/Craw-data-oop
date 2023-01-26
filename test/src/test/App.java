@@ -1,44 +1,73 @@
 package test;
-import java.io.IOException;
-import java.util.Scanner;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.FileWriter;
-import java.io.IOException;
 
 public class App {
+    /**
+     * @param args
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
-        // The URL of the page you want to crawl
-        String url = "https://nguoikesu.com/";
+        // The name of the file to read
+        String filename = "D:\\HUST\\Nam3\\OOP\\Project\\test\\src\\test\\hrefs.json";
 
-        // Connect to the website and get the HTML
-        Document doc = Jsoup.connect(url).get();
+        // Read the file into a JSONArray object
+        JSONArray array;
+        try (FileReader reader = new FileReader(filename)) {
+            JSONTokener tokener = new JSONTokener(reader);
+            array = new JSONArray(tokener);
+        }
+        String[] urls = new String[array.length()];
 
-        // Find all the elements with the class "data"
-        Elements elements = doc.select("#jm-left > div > div:nth-child(1) > div > div.jm-module-content.clearfix > ul > li > a"); 
+        // Loop through the array and print out the values
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject object = array.getJSONObject(i);
+            urls[i] = object.getString("href").toString();
+            // System.out.println( urls[i]);
+        }
 
         // Create a JSON array to store the data
         JSONArray dataArray = new JSONArray();
 
-        // Add each element to the array as a JSON object
-        for (Element element : elements) {
+        // Loop through each URL
+        for (String url : urls) {
+            // Connect to the website and get the HTML
+            Document doc = Jsoup.connect(url).get();
+
+            // Find all the elements with the class "data"
+            Elements elements1 = doc.getElementsByClass("subheading-category");
+            Elements elements2 = doc.getElementsByClass("category-desc clearfix");
+
             JSONObject dataObject = new JSONObject();
-            dataObject.put("data", element.text());
-            dataArray.put(dataObject);
+            // Add each element to the array as a JSON object
+            for (Element element1 : elements1) {
+                dataObject.put("name", element1.text());
+            }
+
+            for (Element element2 : elements2) {
+                dataObject.put("data", element2.text());
+                dataArray.put(dataObject);
+            }
+
         }
 
         // Write the array to a JSON file
-        try (FileWriter file = new FileWriter("data.json")) {
+        try (FileWriter file = new FileWriter("trieu-dai-lich-su.json")) {
             file.write(dataArray.toString());
             file.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }
